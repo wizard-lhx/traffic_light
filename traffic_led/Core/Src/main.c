@@ -75,7 +75,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+	
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -88,22 +88,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
-  MX_TIM4_Init();
+  MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim2);
-	HAL_TIM_Base_Start_IT(&htim4);
+	HAL_TIM_Base_Start_IT(&htim3);
 	for(uint8_t i = 0;i < 7;i++)
 	{
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0 << i, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin << i, GPIO_PIN_SET);
 	}
 	for(uint8_t i = 0;i < 7;i++)
 	{
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_0 << i, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
 	}
-	for(uint8_t i = 0;i < 2;i++)
+	for(uint8_t i = 0;i < 4;i++)
 	{
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0 << i, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin << i, GPIO_PIN_RESET);
 	}
   /* USER CODE END 2 */
 
