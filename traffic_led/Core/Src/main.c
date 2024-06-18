@@ -93,17 +93,17 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim2);
 	HAL_TIM_Base_Start_IT(&htim3);
-	for(uint8_t i = 0;i < 7;i++)
+	for(uint8_t i = 0;i < 8;i++)
 	{
 		HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin << i, GPIO_PIN_SET);
 	}
-	for(uint8_t i = 0;i < 7;i++)
+	for(uint8_t i = 0;i < 8;i++)
 	{
 		HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
 	}
 	for(uint8_t i = 0;i < 4;i++)
 	{
-		HAL_GPIO_WritePin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin << i, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin << i, GPIO_PIN_SET);
 	}
   /* USER CODE END 2 */
 
