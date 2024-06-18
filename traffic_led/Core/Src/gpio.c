@@ -56,8 +56,8 @@ void MX_GPIO_Init(void)
                           |PEOPLE_R_Pin|PEOPLE_G_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, DIGITAL_TUBE_SEGMENT_Pin|GPIO_PIN_1|GPIO_PIN_2|VERTICAL_TENS_Pin
-                          |VERTICAL_ONES_Pin|HORIZONTAL_TENS_Pin|HORIZONTAL_ONES_Pin|GPIO_PIN_3
+  HAL_GPIO_WritePin(GPIOB, DIGITAL_TUBE_SEGMENT_Pin|GPIO_PIN_1|GPIO_PIN_2|HORIZONTAL_TENS_Pin
+                          |HORIZONTAL_ONES_Pin|VERTICAL_TENS_Pin|VERTICAL_ONES_Pin|GPIO_PIN_3
                           |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PAPin PAPin PAPin PAPin
@@ -74,8 +74,8 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PBPin PB1 PB2 PBPin
                            PBPin PBPin PBPin PB3
                            PB4 PB5 PB6 PB7 */
-  GPIO_InitStruct.Pin = DIGITAL_TUBE_SEGMENT_Pin|GPIO_PIN_1|GPIO_PIN_2|VERTICAL_TENS_Pin
-                          |VERTICAL_ONES_Pin|HORIZONTAL_TENS_Pin|HORIZONTAL_ONES_Pin|GPIO_PIN_3
+  GPIO_InitStruct.Pin = DIGITAL_TUBE_SEGMENT_Pin|GPIO_PIN_1|GPIO_PIN_2|HORIZONTAL_TENS_Pin
+                          |HORIZONTAL_ONES_Pin|VERTICAL_TENS_Pin|VERTICAL_ONES_Pin|GPIO_PIN_3
                           |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;

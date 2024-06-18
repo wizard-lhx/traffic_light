@@ -41,16 +41,18 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+uint8_t update_1000ms;
+uint8_t update_10ms;
+
+uint8_t vertical_time_sub;
+uint8_t horizontal_time_sub;
+
 // 交通灯所有状态时间
-static uint8_t vertical_green_time = 15, vertical_yellow_time = 3, 
-	horizontal_green_time = 15, horizontal_yellow_time = 3, 
-	vertical_turn_left_green_time = 3, vertical_turn_left_yellow_time = 3, 
-	horizontal_turn_left_green_time = 3, horizontal_turn_left_yellow_time = 3,
-	people_time = 3;
-// 数码管显示标志和显示数字
-uint8_t vertical_display_num,horizontal_display_num,vertical_display_flag,horizontal_display_flag;
-// 共阳极数码管字模
-uint8_t num_table[11]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff};
+extern uint8_t vertical_green_time, vertical_yellow_time, 
+	horizontal_green_time, horizontal_yellow_time, 
+	vertical_turn_left_green_time, vertical_turn_left_yellow_time, 
+	horizontal_turn_left_green_time, horizontal_turn_left_yellow_time,
+	people_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +68,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t gpio_pin);
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
@@ -210,6 +213,20 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles DMA1 channel5 global interrupt.
+  */
+void DMA1_Channel5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel5_IRQn 1 */
+}
+
+/**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
 void EXTI9_5_IRQHandler(void)
@@ -230,178 +247,7 @@ void EXTI9_5_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-	static uint8_t led_state = 0;// 0是横向红灯（竖向绿灯）、1是横向红灯（竖向黄灯）、
-	                             // 2是竖向红灯（横向绿灯）、3是竖向红灯（横向黄灯）、
-	                             // 4是横向红灯（竖向左转绿灯）、5是横向红灯（竖向黄灯）、
-	                             // 6是竖向红灯（横向左转绿灯）、7是竖向红灯（横向黄灯）、
-	                             // 8是人行道绿灯
-
-	static uint8_t count;
-	led_state %= 9;
-	switch(led_state)
-	{
-		case 0:
-		{
-			HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(VERTICAL_R_GPIO_Port, VERTICAL_R_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(PEOPLE_G_GPIO_Port, PEOPLE_G_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(PEOPLE_R_GPIO_Port, PEOPLE_R_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(VERTICAL_G_GPIO_Port, VERTICAL_G_Pin, GPIO_PIN_RESET);
-			count++;
-			
-			horizontal_display_flag = 1;
-			if(vertical_green_time + vertical_yellow_time >= count)
-				horizontal_display_num = vertical_green_time + vertical_yellow_time - count;
-			if(count >= vertical_green_time)
-			{
-				led_state += 1;
-				count = 0;
-			}
-		}
-		break;
-		case 1:
-		{
-			HAL_GPIO_TogglePin(VERTICAL_Y_GPIO_Port, VERTICAL_Y_Pin);
-			HAL_GPIO_WritePin(VERTICAL_G_GPIO_Port, VERTICAL_G_Pin, GPIO_PIN_SET);
-			count++;
-			
-			if(vertical_yellow_time >= count)
-				horizontal_display_num = vertical_yellow_time - count;
-			if(count >= vertical_yellow_time)
-			{
-				led_state += 1;
-				count = 0;
-				horizontal_display_flag = 0;
-			}
-		}
-		break;
-		case 2:
-		{
-			HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(VERTICAL_Y_GPIO_Port, VERTICAL_Y_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(HORIZONTAL_G_GPIO_Port, HORIZONTAL_G_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(VERTICAL_R_GPIO_Port, VERTICAL_R_Pin, GPIO_PIN_RESET);
-			count++;
-			
-			vertical_display_flag = 1;
-			if(horizontal_green_time + horizontal_yellow_time >= count)
-				vertical_display_num = horizontal_green_time + horizontal_yellow_time - count;
-			if(count >= horizontal_green_time)
-			{
-				led_state += 1;
-				count = 0;
-			}
-		}
-		break;
-		case 3:
-		{
-			HAL_GPIO_TogglePin(HORIZONTAL_Y_GPIO_Port, HORIZONTAL_Y_Pin);
-			HAL_GPIO_WritePin(HORIZONTAL_G_GPIO_Port, HORIZONTAL_G_Pin, GPIO_PIN_SET);
-			count++;
-			
-			vertical_display_flag = 1;
-			if(horizontal_yellow_time >= count)
-				vertical_display_num = horizontal_yellow_time - count;
-			if(count >= horizontal_yellow_time)
-			{
-				led_state += 1;
-				count = 0;
-				vertical_display_flag = 0;
-			}
-		}
-		break;
-		case 4:
-		{
-			HAL_GPIO_WritePin(HORIZONTAL_Y_GPIO_Port, HORIZONTAL_Y_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(VERTICAL_R_GPIO_Port, VERTICAL_R_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(VERTICAL_LG_GPIO_Port, VERTICAL_LG_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin, GPIO_PIN_RESET);
-			count++;
-			
-			horizontal_display_flag = 1;
-			if(vertical_turn_left_green_time + vertical_turn_left_yellow_time >= count)
-				horizontal_display_num = vertical_turn_left_green_time + vertical_turn_left_yellow_time - count;
-			if(count >= vertical_turn_left_green_time)
-			{
-				led_state += 1;
-				count = 0;
-			}
-		}
-		break;
-		case 5:
-		{
-			HAL_GPIO_TogglePin(VERTICAL_Y_GPIO_Port, VERTICAL_Y_Pin);
-			HAL_GPIO_WritePin(VERTICAL_LG_GPIO_Port, VERTICAL_LG_Pin, GPIO_PIN_SET);
-			count++;
-			
-			if(vertical_turn_left_yellow_time >= count)
-				horizontal_display_num = vertical_turn_left_yellow_time - count;
-			if(count >= vertical_turn_left_yellow_time)
-			{
-				led_state += 1;
-				count = 0;
-				horizontal_display_flag = 0;
-			}
-		}
-		break;
-		case 6:
-		{
-			HAL_GPIO_WritePin(VERTICAL_Y_GPIO_Port, VERTICAL_Y_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(HORIZONTAL_LG_GPIO_Port, HORIZONTAL_LG_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(VERTICAL_R_GPIO_Port, VERTICAL_R_Pin, GPIO_PIN_RESET);
-			count++;
-			
-			vertical_display_flag = 1;
-			if(horizontal_turn_left_green_time + horizontal_turn_left_yellow_time >= count)
-				vertical_display_num = horizontal_turn_left_green_time + horizontal_turn_left_yellow_time - count;
-			if(count >= horizontal_turn_left_green_time)
-			{
-				led_state += 1;
-				count = 0;
-			}
-		}
-		break;
-		case 7:
-		{
-			HAL_GPIO_TogglePin(HORIZONTAL_Y_GPIO_Port, HORIZONTAL_Y_Pin);
-			HAL_GPIO_WritePin(HORIZONTAL_LG_GPIO_Port, HORIZONTAL_LG_Pin, GPIO_PIN_SET);
-			count++;
-			
-			if(horizontal_turn_left_yellow_time >= count)
-				vertical_display_num = horizontal_turn_left_yellow_time - count;
-			if(count >= horizontal_turn_left_yellow_time)
-			{
-				led_state += 1;
-				count = 0;
-				vertical_display_flag = 0;
-			}
-		}
-		break;
-		case 8:
-		{
-			HAL_GPIO_WritePin(HORIZONTAL_Y_GPIO_Port, HORIZONTAL_Y_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(HORIZONTAL_R_GPIO_Port, HORIZONTAL_R_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(PEOPLE_R_GPIO_Port, PEOPLE_R_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(PEOPLE_G_GPIO_Port, PEOPLE_G_Pin, GPIO_PIN_RESET);
-			count++;
-			
-			vertical_display_flag = 1;
-			horizontal_display_flag = 1;
-			if(people_time >= count)
-				vertical_display_num = people_time - count;
-			horizontal_display_num = vertical_display_num;
-			if(count >= people_time)
-			{
-				led_state += 1;
-				count = 0;
-				vertical_display_flag = 0;
-				horizontal_display_flag = 0;
-			}
-		}
-		break;
-		default: break;
-	}
+	update_1000ms = 1;
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
@@ -415,107 +261,7 @@ void TIM2_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-	// 数码管显示
-	uint8_t ones,tens;
-	if(horizontal_display_flag == 1)
-	{
-		ones = horizontal_display_num % 10;
-		tens = horizontal_display_num / 10;
-		if(HAL_GPIO_ReadPin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin))
-		{
-			// 消影
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-			}
-			// 位选
-			HAL_GPIO_WritePin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(HORIZONTAL_TENS_GPIO_Port, HORIZONTAL_TENS_Pin, GPIO_PIN_SET);
-			// 段选
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				if((GPIO_PIN_0 << i) & num_table[tens])
-				{
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-				}
-				else
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_RESET);
-			}
-		}
-		else
-		{
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-			}
-			HAL_GPIO_WritePin(HORIZONTAL_TENS_GPIO_Port, HORIZONTAL_TENS_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin, GPIO_PIN_SET);
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				if((GPIO_PIN_0 << i) & num_table[ones])
-				{
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-				}
-				else
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_RESET);
-			}
-		}
-	}
-	else // 灭灯
-	{
-		HAL_GPIO_WritePin(HORIZONTAL_ONES_GPIO_Port, HORIZONTAL_ONES_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(HORIZONTAL_TENS_GPIO_Port, HORIZONTAL_TENS_Pin, GPIO_PIN_RESET);
-	}
-	// 竖直方向数码管
-	if(vertical_display_flag == 1)
-	{
-		ones = vertical_display_num % 10;
-		tens = vertical_display_num / 10;
-		if(HAL_GPIO_ReadPin(VERTICAL_ONES_GPIO_Port, VERTICAL_ONES_Pin))
-		{
-			// 消影
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-			}
-			// 位选
-			HAL_GPIO_WritePin(VERTICAL_ONES_GPIO_Port, VERTICAL_ONES_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(VERTICAL_TENS_GPIO_Port, VERTICAL_TENS_Pin, GPIO_PIN_SET);
-			// 段选
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				if((GPIO_PIN_0 << i) & num_table[tens])
-				{
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-				}
-				else
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_RESET);
-			}
-		}
-		else
-		{
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-			}
-			HAL_GPIO_WritePin(VERTICAL_TENS_GPIO_Port, VERTICAL_TENS_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(VERTICAL_ONES_GPIO_Port, VERTICAL_ONES_Pin, GPIO_PIN_SET);
-			for(uint8_t i = 0;i < 8;i++)
-			{
-				if((GPIO_PIN_0 << i) & num_table[ones])
-				{
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_SET);
-				}
-				else
-					HAL_GPIO_WritePin(DIGITAL_TUBE_SEGMENT_GPIO_Port, DIGITAL_TUBE_SEGMENT_Pin << i, GPIO_PIN_RESET);
-			}
-		}
-	}
-	else // 灭灯
-	{
-		HAL_GPIO_WritePin(VERTICAL_ONES_GPIO_Port, VERTICAL_ONES_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(VERTICAL_TENS_GPIO_Port, VERTICAL_TENS_Pin, GPIO_PIN_RESET);
-	}
+	update_10ms = 1;
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
@@ -529,7 +275,7 @@ void TIM3_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
+	
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
@@ -544,16 +290,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t gpio_pin)
 	{
 		if(horizontal_green_time > 2)
 		{
-			vertical_green_time += 2;
-			horizontal_green_time -= 2;
+			horizontal_time_sub += 2;
 		}
 	}
 	else if(gpio_pin == HORIZONTAL_SET_Pin)
 	{
 		if(vertical_green_time > 2)
 		{
-			horizontal_green_time += 2;
-			vertical_green_time -= 2;
+			vertical_time_sub += 2;
 		}
 	}
 }
